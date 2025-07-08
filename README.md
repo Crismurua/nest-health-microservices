@@ -13,7 +13,8 @@ nest-tranporter-api/
 ├── apps/
 │   ├── api-gateway/          # Gateway principal (Puerto 3000)
 │   ├── patients/             # Microservicio de Pacientes (Puerto 4001)
-│   └── appointments/         # Microservicio de Citas (Puerto 4002)
+│   ├── appointments/         # Microservicio de Citas (Puerto 4002)
+│   └── ai-tool/             # Microservicio de IA (Puerto 4003)
 ├── package.json
 ├── nest-cli.json
 └── tsconfig.json
@@ -46,6 +47,7 @@ nest-tranporter-api/
 **Endpoints Expuestos**:
 - `/patients` - Conectarse con el microservicio de pacientes
 - `/appointments` - Conectarse con el microservicio de citas
+- `/ai-tools` - Conectarse con el microservicio de IA
 
 **Comunicación con Microservicios**:
 ```typescript
@@ -111,6 +113,44 @@ class AppointmentDto {
 - `appointments.update` - Actualizar cita
 - `appointments.remove` - Eliminar cita
 
+### 4. Microservicio de IA (`apps/ai-tool`)
+
+**Propósito**: Proporcionar capacidades de inteligencia artificial local.
+
+**Configuración**:
+- **Puerto**: 4003
+- **Tipo**: Microservicio TCP
+- **Protocolo**: TCP
+- **Motor de IA**: Ollama (local)
+
+**Modelo de Datos**:
+```typescript
+class CreateAiToolDto {
+  prompt: string;
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+```
+
+**Patrones de Mensaje**:
+- `ai-tools.create` - Generar texto con parámetros completos
+- `ai-tools.generate` - Generar texto simple
+- `ai-tools.analyze-sentiment` - Analizar sentimientos
+- `ai-tools.models` - Listar modelos disponibles
+
+**Endpoints HTTP**:
+- `POST /ai-tools` - Generación principal
+- `POST /ai-tools/generate` - Generación simple
+- `POST /ai-tools/analyze-sentiment` - Análisis de sentimientos
+- `GET /ai-tools/models` - Modelos disponibles
+
+**Características**:
+- ✅ **IA Local**: Usa Ollama para procesamiento local
+- ✅ **Sin Costos**: Sin límites de uso ni facturación
+- ✅ **Privacidad Total**: Datos no salen del servidor
+- ✅ **Modelo por Defecto**: phi:2.7b (1.6GB)
+
 ## Flujo de Comunicación
 
 ### Arquitectura de Comunicación
@@ -146,6 +186,13 @@ Cliente HTTP → API Gateway (HTTP) → Microservicios (TCP)
         │   Patients MS   │                   │ Appointments MS │
         │  (Puerto 4001)  │                   │  (Puerto 4002)  │
         └─────────────────┘                   └─────────────────┘
+                                         │
+                                    TCP  │
+                                         ▼
+                            ┌─────────────────┐
+                            │   AI-Tool MS    │
+                            │  (Puerto 4003)  │
+                            └─────────────────┘
 ```
 
 ## Reflexión sobre la Arquitectura
@@ -171,6 +218,11 @@ Cliente HTTP → API Gateway (HTTP) → Microservicios (TCP)
 - TCP transport es más eficiente que HTTP para comunicación interna
 - Message patterns proporcionan un contrato claro entre servicios
 
+#### ✅ **Capacidades de IA Local**
+- Integración con Ollama para procesamiento de IA local
+- Generación de texto, análisis de sentimientos y gestión de modelos
+- Privacidad total sin dependencias externas
+
 
 ## Conclusión
 
@@ -179,5 +231,60 @@ La arquitectura implementada representa una **base sólida** para un sistema de 
 Sin embargo, para un entorno de producción, será necesario abordar las áreas de mejora identificadas, especialmente en términos de **persistencia de datos**, **manejo de errores** y **observabilidad**.
 
 La arquitectura actual es **ideal para desarrollo y prototipado**, pero requiere evolución para ser **production-ready**.
+
+## 🚀 **Ejecución del Sistema**
+
+### **Comandos para Levantar los Microservicios**
+
+```bash
+# Terminal 1 - API Gateway
+npm run start:gateway:dev
+
+# Terminal 2 - Microservicio de Pacientes
+npm run start:patients:dev
+
+# Terminal 3 - Microservicio de Citas
+npm run start:appointments:dev
+
+# Terminal 4 - Microservicio de IA
+npm run start:ai-tool:dev
+```
+
+### **Prerequisitos para el Microservicio de IA**
+
+```bash
+# Instalar Ollama
+sudo snap install ollama
+
+# Descargar modelo de IA
+ollama pull phi:2.7b
+
+# Iniciar servicio Ollama
+ollama serve
+```
+
+### **Ejemplos de Uso del Microservicio de IA**
+
+```bash
+# Generar texto
+curl -X POST http://localhost:3000/ai-tools \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Explica qué es la inteligencia artificial",
+    "model": "phi:2.7b",
+    "temperature": 0.7,
+    "maxTokens": 150
+  }'
+
+# Analizar sentimientos
+curl -X POST http://localhost:3000/ai-tools/analyze-sentiment \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Este proyecto es increíble"
+  }'
+
+# Ver modelos disponibles
+curl -X GET http://localhost:3000/ai-tools/models
+```
 
 ---
