@@ -10,6 +10,15 @@
   "monorepo": true,
   "root": "apps/api-gateway",
   "projects": {
+    "ai-tool": {
+      "type": "application",
+      "root": "apps/ai-tool",
+      "entryFile": "main",
+      "sourceRoot": "apps/ai-tool/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/ai-tool/tsconfig.app.json"
+      }
+    },
     "api-gateway": {
       "type": "application",
       "root": "apps/api-gateway",
